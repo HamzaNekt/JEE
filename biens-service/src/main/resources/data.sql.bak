@@ -1,0 +1,16 @@
+-- Biens disponibles
+INSERT INTO biens (id, titre, description, ville, prix, type_bien, disponible, created_at) VALUES
+  (1, 'Appartement centre-ville Paris 16e', 'Appartement T3 de 85m² avec balcon, proche tram et commerces, parking inclus', 'Paris', 750000, 'APPARTEMENT', true, NOW()),
+  (2, 'Maison familiale Lyon Confluence', 'Maison récente 4 chambres avec jardin de 300m², garage double, quartier résidentiel calme', 'Lyon', 520000, 'MAISON', true, NOW()),
+  (3, 'Studio étudiant Grenoble', 'Studio meublé de 25m² idéal étudiant, proche universités et transports', 'Grenoble', 145000, 'STUDIO', true, NOW()),
+  (4, 'Villa Marseille Calanques', 'Villa d''exception 200m² avec piscine, vue mer panoramique, 5 chambres', 'Marseille', 1250000, 'VILLA', true, NOW()),
+  (5, 'Appartement Bordeaux Chartrons', 'T2 de 55m² rénové, quartier des Chartrons, cave à vin', 'Bordeaux', 380000, 'APPARTEMENT', true, NOW()),
+  (6, 'Maison Toulouse Capitole', 'Maison de ville 3 chambres, terrasse 50m², centre historique', 'Toulouse', 465000, 'MAISON', true, NOW()),
+  (7, 'Studio Nice Promenade', 'Studio 30m² face mer, résidence standing avec piscine', 'Nice', 225000, 'STUDIO', true, NOW()),
+  (8, 'Loft Nantes Île de Nantes', 'Loft industriel 120m², double hauteur, terrasse 40m²', 'Nantes', 485000, 'LOFT', true, NOW());
+
+-- Biens déjà réservés (indisponibles)
+INSERT INTO biens (id, titre, description, ville, prix, type_bien, disponible, created_at) VALUES
+  (9, 'Appartement Lyon Part-Dieu', 'T4 de 95m², rénové, 3 chambres, balcon', 'Lyon', 425000, 'APPARTEMENT', false, NOW()),
+  (10, 'Maison Strasbourg Neudorf', 'Maison alsacienne rénovée, 4 chambres, jardin arboré', 'Strasbourg', 550000, 'MAISON', false, NOW());
+

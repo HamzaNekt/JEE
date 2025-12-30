@@ -1,0 +1,28 @@
+-- Utilisateurs pour l'authentification (password: test123 pour tous)
+INSERT INTO users (username, password, roles) VALUES
+  ('admin', '$2a$10$4GneHHk9oePFbpVerj7h0O.h5NxdorkbyC0R.2SDUEE6s2RR6AOLa', 'ROLE_ADMIN'),
+  ('agent', '$2a$10$4GneHHk9oePFbpVerj7h0O.h5NxdorkbyC0R.2SDUEE6s2RR6AOLa', 'ROLE_USER'),
+  ('client1', '$2a$10$4GneHHk9oePFbpVerj7h0O.h5NxdorkbyC0R.2SDUEE6s2RR6AOLa', 'ROLE_USER');
+
+-- Clients (acheteurs potentiels)
+INSERT INTO clients (id, nom, email) VALUES
+  (1, 'Alice Martin', 'alice.martin@example.com'),
+  (2, 'Bob Durand', 'bob.durand@example.com'),
+  (3, 'Claire Dubois', 'claire.dubois@example.com'),
+  (4, 'David Leroy', 'david.leroy@example.com'),
+  (5, 'Emma Bernard', 'emma.bernard@example.com');
+
+-- Réservations (certaines en cours, d'autres terminées)
+INSERT INTO reservations (id, client_id, bien_id, date_debut, date_fin, statut, created_at) VALUES
+  -- Réservations futures
+  (1, 1, 1, CURRENT_DATE + INTERVAL 5 DAY, CURRENT_DATE + INTERVAL 12 DAY, 'EN_ATTENTE', NOW()),
+  (2, 2, 2, CURRENT_DATE + INTERVAL 10 DAY, CURRENT_DATE + INTERVAL 20 DAY, 'EN_ATTENTE', NOW()),
+  (3, 3, 4, CURRENT_DATE + INTERVAL 15 DAY, CURRENT_DATE + INTERVAL 25 DAY, 'EN_ATTENTE', NOW()),
+
+  -- Réservations en cours (bien id 9 et 10 sont indisponibles car réservés)
+  (4, 4, 9, CURRENT_DATE - INTERVAL 2 DAY, CURRENT_DATE + INTERVAL 8 DAY, 'EN_ATTENTE', NOW() - INTERVAL 5 DAY),
+  (5, 5, 10, CURRENT_DATE - INTERVAL 1 DAY, CURRENT_DATE + INTERVAL 14 DAY, 'EN_ATTENTE', NOW() - INTERVAL 3 DAY),
+
+  -- Alice a plusieurs réservations
+  (6, 1, 5, CURRENT_DATE + INTERVAL 20 DAY, CURRENT_DATE + INTERVAL 27 DAY, 'EN_ATTENTE', NOW());
+

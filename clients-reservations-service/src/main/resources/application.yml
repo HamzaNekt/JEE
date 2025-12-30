@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: clients-reservations-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  sql:
+    init:
+      mode: never
+
+server:
+  port: ${PORT:0}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,configprops
+

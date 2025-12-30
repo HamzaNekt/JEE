@@ -1,0 +1,197 @@
+version: "3.9"
+
+services:
+  config-server:
+    build: ./config-server
+    environment:
+      - CONFIG_REPO_URI=file:/config-repo
+    volumes:
+      - ./immo-config-repo:/config-repo
+    ports:
+      - "8888:8888"
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  eureka-server:
+    build: ./eureka-server
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+    ports:
+      - "8761:8761"
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  gateway:
+    build: ./gateway
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_HOST=eureka-server
+      - JWT_SECRET=dev-secret-key-minimum-256-bits-required-for-hs256-algorithm
+    ports:
+      - "8080:8080"
+    networks:
+      - backend-net
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - gateway
+    environment:
+      - VITE_API_BASE_URL=http://gateway:8080
+    ports:
+      - "3000:80"
+    networks:
+      - backend-net
+
+  biens-service:
+    build: ./biens-service
+    depends_on:
+      mysql_biens:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_HOST=eureka-server
+      - BIENS_DB_HOST=mysql_biens
+      - BIENS_DB_USER=root
+      - BIENS_DB_PASSWORD=root
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql_biens:3306/biens_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    networks:
+      - backend-net
+    restart: on-failure
+
+  clients-reservations-service:
+    build: ./clients-reservations-service
+    depends_on:
+      mysql_reservations:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_HOST=eureka-server
+      - RESERVATIONS_DB_HOST=mysql_reservations
+      - RESERVATIONS_DB_USER=root
+      - RESERVATIONS_DB_PASSWORD=root
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql_reservations:3306/reservations_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    networks:
+      - backend-net
+    restart: on-failure
+
+  immobilier-api:
+    build: ./immobilier-api
+    depends_on:
+      - config-server
+      - eureka-server
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_HOST=eureka-server
+      - JWT_SECRET=dev-secret-key-minimum-256-bits-required-for-hs256-algorithm
+    networks:
+      - backend-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - backend-net
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - backend-net
+
+  mysql_biens:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=biens_db
+    ports:
+      - "3307:3306"
+    networks:
+      - backend-net
+    volumes:
+      - mysql_biens_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  mysql_reservations:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=reservations_db
+    ports:
+      - "3308:3306"
+    networks:
+      - backend-net
+    volumes:
+      - mysql_reservations_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  mysql_biens_data:
+  mysql_reservations_data:
+

@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'gateway'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['gateway:8080']
+
+  - job_name: 'eureka'
+    scrape_interval: 15s
+    eureka_sd_configs:
+      - server: http://eureka-server:8761/eureka
+    relabel_configs:
+      - source_labels: [__meta_eureka_app_instance_metadata_management_port]
+        target_label: __address__
+        regex: (.+)
+        replacement: ${1}
+      - source_labels: [__meta_eureka_app_name]
+        target_label: job
+      - source_labels: [__meta_eureka_app_instance_hostname, __meta_eureka_app_instance_port]
+        separator: ':'
+        target_label: __address__
+        regex: (.+):(.+)
+        replacement: ${1}:${2}
+    metrics_path: /actuator/prometheus
+
